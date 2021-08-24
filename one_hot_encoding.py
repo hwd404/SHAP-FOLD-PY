@@ -102,13 +102,13 @@ def encode_data(y, data, attrs=[], numerics=[]):
     return mapped_attrs, ret
 
 
-def encode_label(data):
+def encode_label(data, pos):
     r, c = np.shape(data)
     ret = []
     for i in range(r):
         line = []
         for j in range(c):
-            if data[i][j] == 'YES':
+            if data[i][j] == pos:
                 line.append(1)
             else:
                 line.append(0)
@@ -116,9 +116,9 @@ def encode_label(data):
     return ret
 
 
-def convert_data(file, columns=[], label='', numerics=[]):
+def convert_data(file, columns=[], label='', pos = '', numerics=[]):
     data = load_data(file, [label])
-    y = encode_label(data)
+    y = encode_label(data, pos)
     data = load_data(file, columns)
     mapped_attrs, x = encode_data(y, data, columns, numerics)
     mapped_attrs[label] = len(mapped_attrs)
@@ -132,9 +132,9 @@ def convert_data(file, columns=[], label='', numerics=[]):
 
 def main():
     # columns = ['a1','a2','a3','a4','a5','a6','a7','a8','a9','a10','age','gender','ethnicity','jaundice','autism','used_app_before','relation']
-    # attrs, data = convert_data('data/autism/autism.csv', columns, 'label', numerics=['age'])
+    # attrs, data = convert_data('data/autism/autism.csv', columns, 'label', 'YES', numerics=['age'])
     columns = ['buying', 'maint', 'doors', 'persons', 'lugboot', 'safety']
-    attrs, data = convert_data('data/cars/cars.csv', columns, 'label', numerics=['a1'])
+    attrs, data = convert_data('data/cars/cars.csv', columns, 'label', 'positive', numerics=['a1'])
     res = [attrs]
     for d in data:
         res.append(d)
