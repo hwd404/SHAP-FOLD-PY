@@ -161,7 +161,7 @@ def split_node(node):
     node.index = max_idx
     if max_idx in node.num_idx:
         _, node.pivot = best_info_gain(data, max_idx)
-        print('split ', max_idx, ' at ', node.pivot)
+        # print('split ', max_idx, ' at ', node.pivot)
         buckets = dict()
         left_name, right_name = '<=', '>'
         left_data, right_data = [], []
@@ -204,10 +204,10 @@ def build_tree(data, num_idx):
 
 def traverse(node, path, splits=dict()):
     if node is None:
-        print(path)
+        # print(path)
         pass
     if entropy(node.data) == 0.0:
-        print(path)
+        # print(path)
         pass
     for i in node.children:
         path.append([node.index, node.pivot, node.extras])
