@@ -250,45 +250,6 @@ def learn_rule(X_pos, SHAP_pos, X_neg, SHAP_neg, depth, used_items=[]):
     return ret
 
 
-def function(rule):
-
-    def _neg(i):
-        if isinstance(i, int) or isinstance(i, np.int32) or isinstance(i, np.int64):
-            return -i - 2
-        elif isinstance(i, tuple):
-            if len(i[1]) == 1 and len(i[2]) == 0:
-                return _neg(i[1][0])
-            elif len(i[1]) == 0 and len(i[2]) == 1:
-                return i[2][0]
-            else:
-                if i[3] < 1:
-                    return -1, [_neg(_i) for _i in i[1]] + [_i for _i in i[2]], [], i[3] ^ 1
-                else:
-                    return -1, [(-1, [_neg(_i) for _i in i[1]], [], 0), (-1, [_i for _i in i[2]], [], 0)], [], 1
-
-    _def = rule[1]
-    _add = []
-    if len(rule[2]) > 0:
-        if rule[3] < 1:
-            for r in rule[2]:
-                _add.append(_neg(function(r)))
-            if len(_add) > 1:
-                _def.extend(_add)
-            else:
-                _def.append(_add[0])
-            ret = (-1, _def, [], 0)
-        else:
-            for r in rule[2]:
-                _add.append(_neg(function(r)))
-            if len(_def) == 0:
-                ret = (-1, _add, [], 1)
-            else:
-                ret = (-1, [(-1, _def, [], 1), (-1, _add, [], 1)], [], 0)
-    else:
-        ret = (-1, _def, [], 0)
-    return ret
-
-
 def flatten(rule):
     def _mul(a, b):
         if len(a) == 0:
