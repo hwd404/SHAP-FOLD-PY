@@ -80,7 +80,7 @@ def main():
     depth = -1
     rules = sf.shap_fold(X_pos, SHAP_pos, X_neg, SHAP_neg, depth=depth)
 
-    print(rules, len(rules))
+    # print(rules, len(rules))
     fidelity, _, _, _ = sf.get_metrics(rules, X_test, Y_test_hat)
     accuracy, _, _, _ = sf.get_metrics(rules, X_test, Y_test)
     print('fidelity: ', fidelity, 'accuracy: ', accuracy)
