@@ -64,22 +64,24 @@ def encode_data(y, data, attrs=[], numerics=[]):
             pairs, strs = discretize(nums, y)
             mapped_numerics[i] = pairs
             for p in pairs:
-                # name = attrs[i] + '_' + str(p[0]) + '-' + str(p[1])
                 name = attrs[i] + '_' + str(round(p[0], 3)) + '-' + str(round(p[1], 3))
-                mapped_attrs[name] = n
-                n += 1
+                if name not in mapped_attrs:
+                    mapped_attrs[name] = n
+                    n += 1
             for s in strs:
                 name = attrs[i] + '_' + s
-                mapped_attrs[name] = n
-                n += 1
+                if name not in mapped_attrs:
+                    mapped_attrs[name] = n
+                    n += 1
         else:
             values = set()
             for j in range(r):
                 values.add(data[j][i])
             for v in values:
                 name = attrs[i] + '_' + v
-                mapped_attrs[name] = n
-                n += 1
+                if name not in mapped_attrs:
+                    mapped_attrs[name] = n
+                    n += 1
     ret = []
     for i in range(r):
         line = [0] * len(mapped_attrs)
@@ -92,7 +94,6 @@ def encode_data(y, data, attrs=[], numerics=[]):
                 for p in rgs:
                     try:
                         if p[0] <= float(data[i][j]) <= p[1]:
-                            # name = attrs[j] + '_' + str(p[0]) + '-' + str(p[1])
                             name = attrs[j] + '_' + str(round(p[0], 3)) + '-' + str(round(p[1], 3))
                             line[mapped_attrs[name]] = 1
                     except:
@@ -138,7 +139,7 @@ def main():
     res = [attrs]
     for d in data:
         res.append(d)
-    # f = open('data/autism/file.csv', 'w')
+    # f = open('data/autism/data_train.csv', 'w')
     f = open('data/cars/file.csv', 'w')
     for item in res:
         f.write(','.join([str(x) for x in item]) + '\n')
