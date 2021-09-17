@@ -130,7 +130,6 @@ def convert_data(file, columns=[], label='', pos = '', numerics=[]):
     return attrs, data
 
 
-
 def main():
     # columns = ['a1','a2','a3','a4','a5','a6','a7','a8','a9','a10','age','gender','ethnicity','jaundice','autism','used_app_before','relation']
     # attrs, data = convert_data('data/autism/autism.csv', columns, 'label', 'YES', numerics=['age'])
