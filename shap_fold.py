@@ -29,7 +29,7 @@ def load_data(data_file, amount=-1):
 
 
 def split_set(data, ratio=0.8):
-    # random.shuffle(data)
+    random.shuffle(data)
     num = int(len(data) * ratio)
     train, test = data[: num], data[num:]
     return train, test
@@ -159,7 +159,6 @@ def flatten_rules(rules):
 
     def _func(rule, root=False):
         t = (tuple(rule[1]), tuple([_eval(i) for i in rule[2]]))
-        # print('t -> ', t)
         if t not in rule_map:
             rule_map[t] = -1 if root else flatten_rules.ab
             _ret = rule_map[t]
@@ -181,6 +180,10 @@ def decode_rules(rules, attrs, numerics=[]):
             strs = attrs[i].split('_')
             v = strs[-1]
             k = '_'.join(strs[:-1])
+            strs = k.split(' ')
+            k = '_'.join(strs)
+            v = str(v).replace(' ', '_')
+            v = 'null' if len(v) == 0 else v
             return k + '(X,' + v + ')'
         elif i == -1:
             return 'goal(X)'
@@ -213,9 +216,6 @@ def shap_fold(X_pos, SHAP_pos, X_neg, SHAP_neg, depth=-1, used_items=[]):
         tp = [i for i in range(len(X_pos)) if cover(rule, X_pos[i], 1)]
         X_pos = [X_pos[i] for i in range(len(X_pos)) if i not in set(tp)]
         SHAP_pos = [SHAP_pos[i] for i in range(len(SHAP_pos)) if i not in set(tp)]
-        tn = [i for i in range(len(X_neg)) if cover(rule, X_neg[i], 0)]
-        X_neg = [X_neg[i] for i in range(len(X_neg)) if i in set(tn)]
-        SHAP_neg = [SHAP_neg[i] for i in range(len(SHAP_neg)) if i in set(tn)]
         if len(tp) == 0:
             break
         ret.append(rule)
@@ -320,15 +320,19 @@ def get_metrics(rules, X, Y):
     return (tp + tn) / n, p, r, f1
 
 
+def predict(rules, X):
+    ret = []
+    for x in X:
+        ret.append(classify(rules, x))
+    return ret
+
+
 def main():
-    # data, attrs = load_data('data/autism/file.csv')
-    # data, attrs = load_data('data/autism/file2.csv')
-    # data, attrs = load_data('data/cars/file.csv')
-    data, attrs = load_data('data/cars/file2.csv')
+    data, attrs = load_data('data/autism/file2.csv')
 
     X, Y = split_xy(data)
-    data_train, data_test = split_set(data, 0.85)
-    data_train, data_valid = split_set(data_train, 0.85)
+    data_train, data_test = split_set(data, 0.8)
+    data_train, data_valid = split_set(data_train, 0.5)
     X_train, Y_train = split_xy(data_train)
     X_valid, Y_valid = split_xy(data_valid)
     valid_set = [(X_valid, Y_valid)]
@@ -358,7 +362,7 @@ def main():
     depth = -1
     rules = shap_fold(X_pos, SHAP_pos, X_neg, SHAP_neg, depth=depth)
 
-    # print(rules, len(rules))
+    print(rules, len(rules))
     fidelity, _, _, _ = get_metrics(rules, X_test, Y_test_hat)
     accuracy, _, _, _ = get_metrics(rules, X_test, Y_test)
     print('fidelity: ', fidelity, 'accuracy: ', accuracy)
