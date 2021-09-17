@@ -1,0 +1,5 @@
+encoding costs:  0:00:18.886909
+xgb model accuracy:  0.7533333333333333
+fidelity:  1.0 accuracy:  0.7533333333333333
+['goal(X):-Credit_Score(X,751.0-inf).', 'ab2(X):-Current_Loan_Amount(X,787798.0-inf),Term(X,Short_Term).', 'goal(X):-Annual_Income(X,897598.0-904362.0),Years_in_current_job(X,null),not ab2(X).', 'ab3(X):-Home_Ownership(X,Home_Mortgage).', 'goal(X):-Annual_Income(X,897598.0-904362.0),Term(X,Long_Term),not ab3(X).'] 5
+total costs:  0:02:06.188202
