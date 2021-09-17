@@ -231,19 +231,18 @@ def credit_preprocess():
     start = timer()
 
     columns = ['Home Ownership', 'Annual Income', 'Years in current job', 'Number of Open Accounts',
-               'Years of Credit History', 'Maximum Open Credit', 'Number of Credit Problems',
-               'Months since last delinquent', 'Bankruptcies', 'Purpose', 'Term', 'Current Loan Amount',
-               'Current Credit Balance', 'Monthly Debt', 'Credit Score']
+    'Years of Credit History', 'Maximum Open Credit', 'Number of Credit Problems', 'Months since last delinquent', 
+    'Bankruptcies', 'Purpose', 'Term', 'Current Loan Amount', 'Current Credit Balance', 'Monthly Debt', 'Credit Score']
 
     data_train, num_idx = dt.load_data('data/credit_default/train.csv', attrs=columns, label=['Credit Default'],
-                                       numerics=['Annual Income', 'Number of Open Accounts', 'Years of Credit History', 'Maximum Open Credit',
+    numerics=['Annual Income', 'Number of Open Accounts', 'Years of Credit History', 'Maximum Open Credit',
     'Months since last delinquent', 'Current Loan Amount', 'Current Credit Balance', 'Monthly Debt', 'Credit Score',],
-                                       pos='1')
+    pos='1')
 
     data_test, _ = dt.load_data('data/credit_default/train.csv', attrs=columns, label=['Credit Default'],
-                                numerics=['Annual Income', 'Number of Open Accounts', 'Years of Credit History', 'Maximum Open Credit',
+    numerics=['Annual Income', 'Number of Open Accounts', 'Years of Credit History', 'Maximum Open Credit',
     'Months since last delinquent', 'Current Loan Amount', 'Current Credit Balance', 'Monthly Debt', 'Credit Score', ],
-                                pos='1')
+    pos='1')
 
     _, n = np.shape(data_train)
     res_train, res_test = dt.encode_data2(data_train, data_test, num_idx, columns)
@@ -314,6 +313,6 @@ def credit_default():
 if __name__ == '__main__':
     # preprocess()
     # preprocess2()
+    credit_preprocess()
     main()
-    # credit_preprocess()
     # credit_default()
