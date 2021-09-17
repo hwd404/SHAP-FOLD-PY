@@ -75,15 +75,11 @@ def info_gain(data, idx):
         tot = pos[i] + neg[i]
         pos[i] /= tot
         neg[i] /= tot
-        if pos[i] > 0.0:
+        if pos[i] > 0:
             ret -= (tot / m) * pos[i] * np.log(pos[i])
-        if neg[i] > 0.0:
+        if neg[i] > 0:
             ret -= (tot / m) * neg[i] * np.log(neg[i])
     return entropy(data) - ret
-
-
-def info_gain_ratio(data, idx):
-    return info_gain(data, idx) / entropy(data, idx)
 
 
 def info_gain_numeric(data, idx, pivot):
@@ -114,7 +110,7 @@ def info_gain_numeric(data, idx, pivot):
     return entropy(data) - ret
 
 
-def best_info_gain(data, idx):
+def best_info_gain2(data, idx):
     m, _ = np.shape(data)
     xs = set()
     for d in data:
@@ -134,6 +130,59 @@ def best_info_gain(data, idx):
     return best_ig, split
 
 
+def ig(tp, fn, tn, fp):
+    ret = 0
+    tot_p, tot_n = float(tp + fp), float(tn + fn)
+    tot = float(tot_p + tot_n)
+    if tp > 0:
+        ret += tp / tot * np.log(tp / tot_p)
+    if fp > 0:
+        ret += fp / tot * np.log(fp / tot_p)
+    if tn > 0:
+        ret += tn / tot * np.log(tn / tot_n)
+    if fn > 0:
+        ret += fn / tot * np.log(fn / tot_n)
+    return ret
+
+
+def best_info_gain(data, idx):
+    m, _ = np.shape(data)
+    p, n = 0, 0
+    pos, neg = dict(), dict()
+    xs = set()
+
+    for d in data:
+        try:
+            key = float(d[idx])
+            xs.add(key)
+            if pos.get(key) is None:
+                pos[key], neg[key] = 0, 0
+            if d[-1] > 0:
+                pos[key] += 1.0
+                p += 1.0
+            else:
+                neg[key] += 1.0
+                n += 1.0
+        except:
+            pass
+    xs = list(xs)
+    xs.sort()
+
+    for i in range(1, len(xs)):
+        pos[xs[i]] += pos[xs[i - 1]]
+        neg[xs[i]] += neg[xs[i - 1]]
+
+    best_ig, split = float('-inf'), float('-inf')
+
+    for i in range(len(xs)):
+        ifg = ig(p - pos[xs[i]], pos[xs[i]], neg[xs[i]], n - neg[xs[i]])
+        if best_ig < ifg:
+            best_ig = ifg
+            split = xs[i]
+
+    return entropy(data) + best_ig, split
+
+
 class Node(object):
     def __init__(self, data, num_idx=[]):
         self.data = data
@@ -149,7 +198,7 @@ def split_node(node):
     if len(data) == 0 or entropy(data) == 0.0:
         return
     m, n = np.shape(data)
-    max_ig = 0.0
+    max_ig = float('-inf')
     max_idx = -1
     for i in range(0, n - 1):
         if i in node.num_idx:
@@ -161,7 +210,6 @@ def split_node(node):
     node.index = max_idx
     if max_idx in node.num_idx:
         _, node.pivot = best_info_gain(data, max_idx)
-        # print('split ', max_idx, ' at ', node.pivot)
         buckets = dict()
         left_name, right_name = '<=', '>'
         left_data, right_data = [], []
@@ -204,10 +252,8 @@ def build_tree(data, num_idx):
 
 def traverse(node, path, splits=dict()):
     if node is None:
-        # print(path)
         pass
     if entropy(node.data) == 0.0:
-        # print(path)
         pass
     for i in node.children:
         path.append([node.index, node.pivot, node.extras])
@@ -256,15 +302,12 @@ def encode_data(data, num_idx, columns=[]):
             values.sort()
             for j in range(len(values)):
                 if j == 0:
-                    # name = columns[i] + '_' + '-inf' + '-' + str(values[j])
                     name = columns[i] + '_' + '-inf' + '-' + str(round(values[j], 3))
                 else:
-                    # name = columns[i] + '_' + str(values[j - 1]) + '-' + str(values[j])
                     name = columns[i] + '_' + str(round(values[j - 1], 3)) + '-' + str(round(values[j], 3))
                 attrs.append(name)
                 attrs_map[name] = k
                 k += 1
-            # name = columns[i] + '_' + str(values[-1]) + '-' + 'inf'
             name = columns[i] + '_' + str(round(values[-1], 3)) + '-' + 'inf'
             attrs.append(name)
             attrs_map[name] = k
@@ -304,7 +347,6 @@ def encode_data(data, num_idx, columns=[]):
                         l, r = values[j - 1], values[j]
                     try:
                         if l < d[i] <= r:
-                            # name = columns[i] + '_' + str(l) + '-' + str(r)
                             name = columns[i] + '_' + str(round(l, 3)) + '-' + str(round(r, 3))
                             row[attrs_map[name]] = 1
                     except:
@@ -313,7 +355,6 @@ def encode_data(data, num_idx, columns=[]):
                 l, r = values[-1] if len(values) > 0 else float('-inf'), float('inf')
                 try:
                     if l < d[i] <= r:
-                        # name = columns[i] + '_' + str(l) + '-' + str(r)
                         name = columns[i] + '_' + str(round(l, 3)) + '-' + str(round(r, 3))
                         row[attrs_map[name]] = 1
                 except:
@@ -326,11 +367,149 @@ def encode_data(data, num_idx, columns=[]):
     return ret
 
 
+def encode_data2(data_train, data_test, num_idx, columns=[]):
+    m, n = np.shape(data_train)
+    attr_splits = dict()
+
+    root = build_tree(data_train, num_idx)
+    traverse(root, [], attr_splits)
+    for d in data_train:
+        for i in range(n - 1):
+            if i in num_idx:
+                if isinstance(d[i], str):
+                    if attr_splits.get(i) is None:
+                        attr_splits[i] = set()
+                    attr_splits[i].add(d[i])
+            else:
+                if attr_splits.get(i) is None:
+                    attr_splits[i] = set()
+                attr_splits[i].add(d[i])
+
+    attrs, k = [], 0
+    attrs_map = dict()
+    for i in attr_splits:
+        if i in num_idx:
+            values, extras = [], set()
+            for j in attr_splits[i]:
+                try:
+                    values.append(float(j))
+                except:
+                    extras.add(j)
+            if len(values) == 0:
+                continue
+            values.sort()
+            for j in range(len(values)):
+                if j == 0:
+                    name = columns[i] + '_' + '-inf' + '-' + str(round(values[j], 3))
+                else:
+                    name = columns[i] + '_' + str(round(values[j - 1], 3)) + '-' + str(round(values[j], 3))
+                attrs.append(name)
+                attrs_map[name] = k
+                k += 1
+            name = columns[i] + '_' + str(round(values[-1], 3)) + '-' + 'inf'
+            attrs.append(name)
+            attrs_map[name] = k
+            k += 1
+            for e in extras:
+                name = columns[i] + '_' + e
+                attrs.append(name)
+                attrs_map[name] = k
+                k += 1
+        else:
+            values = attr_splits[i]
+            for v in values:
+                name = columns[i] + '_' + str(v)
+                attrs.append(name)
+                attrs_map[name] = k
+                k += 1
+
+    attrs.append('label')
+    ret_train, ret_test = [attrs], [attrs]
+    for d in data_train:
+        row = [0] * k
+        for i in range(n - 1):
+            if i in num_idx:
+                if i not in attr_splits:
+                    continue
+                values = []
+                for j in attr_splits[i]:
+                    try:
+                        values.append(float(j))
+                    except:
+                        pass
+                values.sort()
+                for j in range(len(values)):
+                    if j == 0:
+                        l, r = float('-inf'), values[j]
+                    else:
+                        l, r = values[j - 1], values[j]
+                    try:
+                        if l < d[i] <= r:
+                            name = columns[i] + '_' + str(round(l, 3)) + '-' + str(round(r, 3))
+                            row[attrs_map[name]] = 1
+                    except:
+                        name = columns[i] + '_' + d[i]
+                        row[attrs_map[name]] = 1
+                l, r = values[-1] if len(values) > 0 else float('-inf'), float('inf')
+                try:
+                    if l < d[i] <= r:
+                        name = columns[i] + '_' + str(round(l, 3)) + '-' + str(round(r, 3))
+                        row[attrs_map[name]] = 1
+                except:
+                    pass
+            else:
+                name = columns[i] + '_' + d[i]
+                row[attrs_map[name]] = 1
+        row.append(d[-1])
+        ret_train.append(row)
+
+    for d in data_test:
+        row = [0] * k
+        for i in range(n - 1):
+            if i in num_idx:
+                if i not in attr_splits:
+                    continue
+                values = []
+                for j in attr_splits[i]:
+                    try:
+                        values.append(float(j))
+                    except:
+                        pass
+                values.sort()
+                for j in range(len(values)):
+                    if j == 0:
+                        l, r = float('-inf'), values[j]
+                    else:
+                        l, r = values[j - 1], values[j]
+                    try:
+                        if l < d[i] <= r:
+                            name = columns[i] + '_' + str(round(l, 3)) + '-' + str(round(r, 3))
+                            row[attrs_map[name]] = 1
+                    except:
+                        name = columns[i] + '_' + d[i]
+                        row[attrs_map[name]] = 1
+                l, r = values[-1] if len(values) > 0 else float('-inf'), float('inf')
+                try:
+                    if l < d[i] <= r:
+                        name = columns[i] + '_' + str(round(l, 3)) + '-' + str(round(r, 3))
+                        row[attrs_map[name]] = 1
+                except:
+                    pass
+            else:
+                name = columns[i] + '_' + d[i]
+                row[attrs_map[name]] = 1
+        row.append(0)
+        ret_test.append(row)
+
+    return ret_train, ret_test
+
+
 def main():
     # columns = ['a1','a2','a3','a4','a5','a6','a7','a8','a9','a10','age','gender','ethnicity','jundice','autism','used_app_before','relation']
     # data, num_idx = load_data('data/autism/autism.csv', attrs=columns, label=['label'], numerics=['age'], pos='YES')
     columns = ['buying', 'maint', 'doors', 'persons', 'lugboot', 'safety']
-    data, num_idx = load_data('data/cars/cars.csv', attrs=columns, label=['label'], numerics=['a1'], pos='positive')
+    data, num_idx = load_data('data/cars/cars.csv', attrs=columns, label=['label'], numerics=[], pos='positive')
+
     _, n = np.shape(data)
     res = encode_data(data, num_idx, columns)
     # f = open('data/autism/file2.csv', 'w')
