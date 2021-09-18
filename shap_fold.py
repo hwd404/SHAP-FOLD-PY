@@ -206,6 +206,7 @@ def decode_rules(rules, attrs, numerics=[]):
 
     for r in rules:
         ret.append(_f2(r))
+    ret.sort()
     return ret
 
 
