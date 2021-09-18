@@ -168,7 +168,7 @@ def main():
     # data, attrs = sf.load_data('data/voting/file.csv')
 
     # data, attrs = sf.load_data('data/acute/file2.csv')
-    # data, attrs = sf.load_data('data/autism/file2.csv')
+    data, attrs = sf.load_data('data/autism/file2.csv')
     # data, attrs = sf.load_data('data/breastw/file2.csv')
     # data, attrs = sf.load_data('data/cars/file2.csv')
     # data, attrs = sf.load_data('data/credit/file2.csv')
@@ -180,7 +180,7 @@ def main():
     # data, attrs = sf.load_data('data/voting/file2.csv')
 
 
-    data, attrs = sf.load_data('data/credit_default/file_train.csv')
+    # data, attrs = sf.load_data('data/credit_default/file_train.csv')
 
     X, Y = sf.split_xy(data)
     data_train, data_test = sf.split_set(data, 0.8)
@@ -221,7 +221,10 @@ def main():
 
     frules = sf.flatten_rules(rules)
     drules = sf.decode_rules(frules, attrs)
-    print(drules, len(drules))
+    # print(drules, len(drules))
+    for r in drules:
+        print(r)
+    print('# of rules: ', len(drules))
 
     end = timer()
     print('total costs: ', timedelta(seconds=end - start))
@@ -231,7 +234,7 @@ def credit_preprocess():
     start = timer()
 
     columns = ['Home Ownership', 'Annual Income', 'Years in current job', 'Number of Open Accounts',
-    'Years of Credit History', 'Maximum Open Credit', 'Number of Credit Problems', 'Months since last delinquent', 
+    'Years of Credit History', 'Maximum Open Credit', 'Number of Credit Problems', 'Months since last delinquent',
     'Bankruptcies', 'Purpose', 'Term', 'Current Loan Amount', 'Current Credit Balance', 'Monthly Debt', 'Credit Score']
 
     data_train, num_idx = dt.load_data('data/credit_default/train.csv', attrs=columns, label=['Credit Default'],
@@ -313,6 +316,6 @@ def credit_default():
 if __name__ == '__main__':
     # preprocess()
     # preprocess2()
-    credit_preprocess()
+    # credit_preprocess()
     main()
     # credit_default()
