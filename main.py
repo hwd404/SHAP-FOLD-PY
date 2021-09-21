@@ -264,6 +264,36 @@ def credit_preprocess():
     print('encoding costs: ', timedelta(seconds=end - start))
 
 
+def titanic_preprocess():
+    start = timer()
+
+    columns = ['Sex', 'Age', 'Number_of_Siblings_Spouses', 'Number_Of_Parents_Children', 'Fare', 'Class', 'Embarked']
+
+    data_train, num_idx = dt.load_data('data/titanic/train.csv', attrs=columns, label=['Survived'],
+    numerics=['Age','Number_of_Siblings_Spouses','Number_Of_Parents_Children','Fare'],
+    pos='1')
+
+    data_test, _ = dt.load_data('data/titanic/train.csv', attrs=columns, label=['Survived'],
+    numerics=['Age','Number_of_Siblings_Spouses','Number_Of_Parents_Children','Fare'],
+    pos='1')
+
+    _, n = np.shape(data_train)
+    res_train, res_test = dt.encode_data3(data_train, data_test, num_idx, columns)
+
+    f = open('data/titanic/file_train2.csv', 'w')
+    for item in res_train:
+        f.write(','.join([str(x) for x in item]) + '\n')
+    f.close()
+
+    f = open('data/titanic/file_test2.csv', 'w')
+    for item in res_test:
+        f.write(','.join([str(x) for x in item]) + '\n')
+    f.close()
+
+    end = timer()
+    print('encoding costs: ', timedelta(seconds=end - start))
+
+
 def credit_default():
     data_train, attrs = sf.load_data('data/credit_default/file_train.csv')
     data_test, _ = sf.load_data('data/credit_default/file_test.csv')
@@ -317,5 +347,6 @@ if __name__ == '__main__':
     # preprocess()
     # preprocess2()
     # credit_preprocess()
-    main()
+    # main()
     # credit_default()
+    titanic_preprocess()
