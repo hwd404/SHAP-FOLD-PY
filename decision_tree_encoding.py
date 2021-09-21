@@ -207,6 +207,8 @@ def split_node(node):
             ig = info_gain(data,i)
         if max_ig < ig:
             max_ig, max_idx = ig, i
+    if max_ig == 0:
+        return
     node.index = max_idx
     if max_idx in node.num_idx:
         _, node.pivot = best_info_gain(data, max_idx)
@@ -367,6 +369,7 @@ def encode_data(data, num_idx, columns=[]):
     return ret
 
 
+# for unlabeled test data
 def encode_data2(data_train, data_test, num_idx, columns=[]):
     m, n = np.shape(data_train)
     attr_splits = dict()
@@ -499,6 +502,144 @@ def encode_data2(data_train, data_test, num_idx, columns=[]):
                 name = columns[i] + '_' + d[i]
                 row[attrs_map[name]] = 1
         row.append(0)
+        ret_test.append(row)
+
+    return ret_train, ret_test
+
+
+# for labeled test data
+def encode_data3(data_train, data_test, num_idx, columns=[]):
+    m, n = np.shape(data_train)
+    attr_splits = dict()
+
+    root = build_tree(data_train, num_idx)
+    traverse(root, [], attr_splits)
+    for d in data_train:
+        for i in range(n - 1):
+            if i in num_idx:
+                if isinstance(d[i], str):
+                    if attr_splits.get(i) is None:
+                        attr_splits[i] = set()
+                    attr_splits[i].add(d[i])
+            else:
+                if attr_splits.get(i) is None:
+                    attr_splits[i] = set()
+                attr_splits[i].add(d[i])
+
+    attrs, k = [], 0
+    attrs_map = dict()
+    for i in attr_splits:
+        if i in num_idx:
+            values, extras = [], set()
+            for j in attr_splits[i]:
+                try:
+                    values.append(float(j))
+                except:
+                    extras.add(j)
+            if len(values) == 0:
+                continue
+            values.sort()
+            for j in range(len(values)):
+                if j == 0:
+                    name = columns[i] + '_' + '-inf' + '-' + str(round(values[j], 3))
+                else:
+                    name = columns[i] + '_' + str(round(values[j - 1], 3)) + '-' + str(round(values[j], 3))
+                attrs.append(name)
+                attrs_map[name] = k
+                k += 1
+            name = columns[i] + '_' + str(round(values[-1], 3)) + '-' + 'inf'
+            attrs.append(name)
+            attrs_map[name] = k
+            k += 1
+            for e in extras:
+                name = columns[i] + '_' + e
+                attrs.append(name)
+                attrs_map[name] = k
+                k += 1
+        else:
+            values = attr_splits[i]
+            for v in values:
+                name = columns[i] + '_' + str(v)
+                attrs.append(name)
+                attrs_map[name] = k
+                k += 1
+
+    attrs.append('label')
+    ret_train, ret_test = [attrs], [attrs]
+    for d in data_train:
+        row = [0] * k
+        for i in range(n - 1):
+            if i in num_idx:
+                if i not in attr_splits:
+                    continue
+                values = []
+                for j in attr_splits[i]:
+                    try:
+                        values.append(float(j))
+                    except:
+                        pass
+                values.sort()
+                for j in range(len(values)):
+                    if j == 0:
+                        l, r = float('-inf'), values[j]
+                    else:
+                        l, r = values[j - 1], values[j]
+                    try:
+                        if l < d[i] <= r:
+                            name = columns[i] + '_' + str(round(l, 3)) + '-' + str(round(r, 3))
+                            row[attrs_map[name]] = 1
+                    except:
+                        name = columns[i] + '_' + d[i]
+                        row[attrs_map[name]] = 1
+                l, r = values[-1] if len(values) > 0 else float('-inf'), float('inf')
+                try:
+                    if l < d[i] <= r:
+                        name = columns[i] + '_' + str(round(l, 3)) + '-' + str(round(r, 3))
+                        row[attrs_map[name]] = 1
+                except:
+                    pass
+            else:
+                name = columns[i] + '_' + d[i]
+                row[attrs_map[name]] = 1
+        row.append(d[-1])
+        ret_train.append(row)
+
+    for d in data_test:
+        row = [0] * k
+        for i in range(n - 1):
+            if i in num_idx:
+                if i not in attr_splits:
+                    continue
+                values = []
+                for j in attr_splits[i]:
+                    try:
+                        values.append(float(j))
+                    except:
+                        pass
+                values.sort()
+                for j in range(len(values)):
+                    if j == 0:
+                        l, r = float('-inf'), values[j]
+                    else:
+                        l, r = values[j - 1], values[j]
+                    try:
+                        if l < d[i] <= r:
+                            name = columns[i] + '_' + str(round(l, 3)) + '-' + str(round(r, 3))
+                            row[attrs_map[name]] = 1
+                    except:
+                        name = columns[i] + '_' + d[i]
+                        row[attrs_map[name]] = 1
+                l, r = values[-1] if len(values) > 0 else float('-inf'), float('inf')
+                try:
+                    if l < d[i] <= r:
+                        name = columns[i] + '_' + str(round(l, 3)) + '-' + str(round(r, 3))
+                        row[attrs_map[name]] = 1
+                except:
+                    pass
+            else:
+                name = columns[i] + '_' + d[i]
+                row[attrs_map[name]] = 1
+        row.append(d[-1])
         ret_test.append(row)
 
     return ret_train, ret_test
