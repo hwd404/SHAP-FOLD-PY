@@ -5,7 +5,7 @@ only the features with best information gain would be selected.
 import numpy as np
 
 
-def load_data(file, attrs=[], label=[], numerics=[], pos=''):
+def load_data(file, attrs=[], label=[], numerics=[], pos='', amount=-1):
     f = open(file, 'r')
     attr_idx, num_idx, lab_idx = [], [], -1
     ret, i = [], 0
@@ -34,6 +34,9 @@ def load_data(file, attrs=[], label=[], numerics=[], pos=''):
                 r.append(y)
             ret.append(r)
         i += 1
+        if amount == 0:
+            break
+        amount -= 1
     n_idx = []
     i = 0
     for j in attr_idx:
