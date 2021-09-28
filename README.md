@@ -68,6 +68,11 @@ SHAP_pos, SHAP_neg are the shapley value matrix for positive data and negative d
 **drules** are the rule set as result. \
 There are many UCI dataset in this repo as examples, you can find the details in the code files.
 
+### Limits
+
+The recommended number of feature columns should be less than 1500. The time consumption are much more sensitive to the number of columns. \
+A tabular dataset with 200 rows and 1500 columns would take 50 minutes to finish on a desktop with 6 core i5 cpu and 32 GB memory.
+
 ### FOLD-R
 
 SHAP-FOLD has some limitations on scalability. Computational work load would increase while the number of rows or columns increased, especially on columns. \
