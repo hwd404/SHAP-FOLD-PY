@@ -72,9 +72,10 @@ There are many UCI dataset in this repo as examples, you can find the details in
 
 The recommended number of feature columns should be less than 1500. The time consumption are much more sensitive to the number of columns. \
 A tabular dataset with 200 rows and 1500 columns would take about 50 minutes to finish on a desktop with 6 core i5 cpu and 32 GB memory.
-
+<!--
 ### FOLD-R
 
 SHAP-FOLD has some limitations on scalability. Computational work load would increase while the number of rows or columns increased, especially on columns. \
 In this scenario, FOLD-R can be used instead. But, the SHAP-FOLD is still better on standard metrics and explainability.\
 The FOLD-R algorithm can be applied on the original tabular data file without encoding. The usage is similar to the above process, the details is in the foldr.py.
+--> 
