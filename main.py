@@ -9,7 +9,7 @@ import decision_tree_encoding as dt
 import shap_fold as sf
 from sklearn.neural_network import MLPClassifier
 
-def preprocess():
+def preprocess_one_hot_encoding():
     # columns = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6']
     # attrs, data = oh.convert_data('data/acute/acute.csv', columns, 'label', 'yes', numerics=['a1'])
 
@@ -76,7 +76,7 @@ def preprocess():
     f.close()
 
 
-def preprocess2():
+def preprocess_decision_tree_encoding():
     start = timer()
 
     # columns = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6']
@@ -358,8 +358,8 @@ def credit_default():
 
 
 if __name__ == '__main__':
-    # preprocess()
-    # preprocess2()
+    # preprocess_one_hot_encoding()
+    # preprocess_decision_tree_encoding()
     # credit_preprocess()
     # main()
     # credit_default()
