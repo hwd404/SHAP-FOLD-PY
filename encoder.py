@@ -108,7 +108,7 @@ def onehot_encode(data, attrs, table=None, attrs_map=None, label_flag=True):
             first_line[j] = key
     if label_flag:
         first_line.append(attrs[-1])
-    first_line = [s.lower().replace(' ', '_') for s in first_line]
+    first_line = [str(s).lower().replace(' ', '_') for s in first_line]
     ret.append(first_line)
     for d in data:
         line = [0] * w
@@ -344,7 +344,7 @@ def tree_encode(data, attrs, root=None, attrs_map=None, label_flag=True):
             first_line[j] = key
     if label_flag:
         first_line.append(attrs[-1])
-    first_line = [s.lower().replace(' ', '_') for s in first_line]
+    first_line = [str(s).lower().replace(' ', '_') for s in first_line]
     ret.append(first_line)
     for d in data:
         line = [0] * w
