@@ -3,69 +3,101 @@ A Python implementation of SHAP-FOLD algorithms.\
 The author of SHAP-FOLD also has an original implementation: \
 https://github.com/fxs130430/SHAP_FOLD \
 You can find the research paper and description in this repository.
-<!--A novel contribution in this Python implementation is that the High Utility Itemset Mining has been built with Beam search and some optimization, which provides a decent performance for HUIM.--> 
 
 ## Install
 ### Prerequisites
 SHAP-FOLD-PY is developed with only python3. Here are the dependencies:
-* SHAP <pre> python3 -m pip install shap </pre>
-* XGBoost <pre> python3 -m pip install xgboost </pre>
-* sklearn <pre> python3 -m pip install scikit-learn </pre>
+
+<code>
+
+      SHAP: python3 -m pip install shap
+      XGBoost: python3 -m pip install xgboost
+      sklearn: python3 -m pip install scikit-learn
+   
+</code>
 
 If there are still missing libraries, you can use the same command to install them.
 
 ## Instruction
 ### Data preparation
+
 The SHAP-FOLD algorithm takes binary tabular data as input, each column should be an independent binary feature. \
 Numeric features would be mapped to as few numerical intervals as possible. \
 We have prepared two different encoders in this repo for tabular data: one-hot encoder and decision tree encoder. 
 + one-hot encoder can be used for simple / small datasets.
 + decision tree encoder can be used for larger datasets. Only the features with high information gain would be selected.
    
-For example, the UCI acute dataset can be encoded to 46 features with one-hot encoding but only encoded to 12 features with decision tree encoding.\
+For example, the UCI acute dataset can be encoded to 55 features with one-hot encoding but only encoded to 6 features with decision tree encoding.\
 Here is an example:
 
 <code>
 
-    import decision_tree_encoding as dt
-    columns = ['a1','a2','a3','a4','a5','a6','a7','a8','a9','a10','age','gender','ethnicity','jundice','autism', 'used_app_before','relation']
-    data_train, num_idx = dt.load_data('data/autism/autism.csv', attrs=columns, label=['label'], numerics=['age'], pos='YES')
+    from encoder import TreeEncoder, OneHotEncoder, save_data_to_file
+    attrs = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6']
+    nums = ['a1']
+    encoder = OneHotEncoder(attrs=attrs, numerics=nums, label='label', pos='yes')
+    data = encoder.encode('data/acute/acute.csv')
+    save_data_to_file(data, 'data/acute/file1.csv')
+
+    encoder = TreeEncoder(attrs=attrs, numerics=nums, label='label', pos='yes')
+    data = encoder.encode('data/acute/acute.csv')
+    save_data_to_file(data, 'data/acute/file2.csv')
+
 </code>
 
-**columns** lists all the features needed, **numerics** lists all the numeric features, **label** implies the feature name of the label, **pos** indicates the positive value of the label.
+**attrs** lists all the features needed, **numerics** lists all the numeric features, **label** implies the feature name of the label, **pos** indicates the positive value of the label.
 
 ### Training
 The SHAP-FOLD algorithm is to generate an explainable model that are represented with an answer set program to explain an existing classification model. Here's an example:
 
 <code>
-
-    import shap_fold as sf 
-    X_train, Y_train = sf.split_xy(data_train)
-    model = xgboost.XGBClassifier(objective='binary:logistic').fit(X_train, Y_train, eval_metric=["logloss"])
+   
+    import xgboost
+    data, attrs = load_data('data/acute/file2.csv')
+    X, Y = split_xy(data)
+    X_train, Y_train, X_test, Y_test = split_data(X, Y, ratio=0.8)
+   
+    model = xgboost.XGBClassifier(objective='binary:logistic',
+                                     max_depth=3,
+                                     n_estimators=10,
+                                     use_label_encoder=False).fit(X_train, Y_train,
+                                                                  eval_metric=["logloss"])
+   
 </code>
 
-We got a xgboost model with above code, then: 
+We trained a xgboost model with above code, then prepare the training data: 
 
 <code>
-
+   
     Y_train_hat = model.predict(X_train)
-    explainer = shap.Explainer(model)
-    X_pos, X_neg = sf.split_X_by_Y(X_train, Y_train_hat)
+    X_pos, X_neg = split_X_by_Y(X_train, Y_train_hat)
 
-    SHAP_pos = sf.get_shap(explainer, X_pos)
-    SHAP_neg = sf.get_shap(explainer, X_neg)
+    explainer = shap.Explainer(model)
+    SHAP_pos = explainer(X_pos).values
+    SHAP_neg = explainer(X_neg).values
+
 </code>
 
 SHAP_pos, SHAP_neg are the shapley value matrix for positive data and negative data.
 
 <code>
 
-    rules = sf.shap_fold(X_pos, SHAP_pos, X_neg, SHAP_neg)
-    frules = sf.flatten_rules(rules)
-    drules = sf.decode_rules(frules, attrs)
+    model = Classifier(attrs=attrs)
+    model.fit(X_pos, SHAP_pos, X_neg, SHAP_neg)
+
 </code>
 
-**drules** are the rule set as result. \
+**model** first need to be initialized with specified attributes, then is trained with the prepared input data. After training, the model can make prediction for the test data:
+
+<code>
+    
+    Y_test_hat = model.predict(X_test)
+    model.print_asp()
+
+</code>
+
+The rules generated by SHAP_FOLD will be stored in the model object. These rules are organized in a nested intermediate representation. The nested rules will be automatically flattened and decoded to conform to the syntax of answer set programs by calling print_asp function:
+
 There are many UCI dataset in this repo as examples, you can find the details in the code files.
 
 ### Limits
@@ -73,10 +105,89 @@ There are many UCI dataset in this repo as examples, you can find the details in
 The recommended number of feature columns should be less than 1500. The time consumption are much more sensitive to the number of columns. \
 The time complexity is roughly polynominal to the number of instances and exponential to the number of features for both shapley value caculation and HUIM. \
 A tabular dataset with 200 rows and 1500 columns would take about 50 minutes to finish on a desktop with 6 core i5 cpu and 32 GB memory.
-<!--
-### FOLD-R
 
-SHAP-FOLD has some limitations on scalability. Computational work load would increase while the number of rows or columns increased, especially on columns. \
-In this scenario, FOLD-R can be used instead. But, the SHAP-FOLD is still better on standard metrics and explainability.\
-The FOLD-R algorithm can be applied on the original tabular data file without encoding. The usage is similar to the above process, the details is in the foldr.py.
---> 
+### Justification by using s(CASP)
+**The installation of s(CASP) system is necessary for this part. The above examples do not need the s(CASP) system.**
+
+Classification and its justification can be conducted with the s(CASP) system. However, each data sample needs to be converted into predicate format that the s(CASP) system expects. The **load_data_pred** function can be used for this conversion; it returns the data predicates string list. The parameter **numerics** lists all the numerical features.
+
+<code>
+	
+	nums = ['Age', 'Number_of_Siblings_Spouses', 'Number_Of_Parents_Children', 'Fare']
+	X_pred = load_data_pred('data/titanic/test.csv', numerics=nums)
+
+</code>
+
+Here is an example of the answer set program generated for the titanic dataset by SHAP_FOLD, along with a test data sample converted into the predicate format.
+
+<code>
+                                                       
+      ab10(X):-fare(X,N80),N80>10.1708,N80=<10.5,not ab7(X).
+      ab11(X):-number_of_siblings_spouses(X,N50),N50>0.0,N50=<1.0,fare(X,N91),N91>15.5,N91=<17.4.
+      ab12(X):-age(X,'null'),not ab11(X).
+      ... ...
+
+      survived(X,'0'):-age(X,'null'),not ab38(X).
+      survived(X,'0'):-class(X,'3'),embarked(X,'s'),not ab32(X),not ab33(X).
+      survived(X,'0'):-class(X,'3'),not ab35(X),not ab37(X).
+      survived(X,'0'):-embarked(X,'s'),not ab38(X),not ab39(X),not ab40(X),not ab41(X).
+      ... ...
+      % # of rules:  50
+      % acc 0.9187 p 0.8946 r 0.9887 f1 0.9393
+                                                       
+</code> 
+
+An easier way to get justification from the s(CASP) system is to call **scasp_query** function. It will send the generated ASP rules, converted data and a query to the s(CASP) system for justification. A previously specified natural language **translation template** can make the justification easier to understand, but is **not necessary**. The template indicates the English string corresponding to a given predicate that models a feature. Here is a (self-explanatory) example of a translation template:
+
+<code>
+	
+	#pred sex(X,Y) :: 'person @(X) is @(Y)'.
+	#pred age(X,Y) :: 'person @(X) is of age @(Y)'.
+	#pred number_of_sibling_spouses(X,Y) :: 'person @(X) had @(Y) siblings or spouses'.
+	... ...
+	#pred ab2(X) :: 'abnormal case 2 holds for @(X)'.
+	#pred ab3(X) :: 'abnormal case 3 holds for @(X)'.
+	... ...
+	
+</code>
+
+The template file can be loaded to the model object with **load_translation** function. Then, the justification is generated by calling **scasp_query**. If the input data is in predicate format, the parameter **pred** needs to be set as True.
+
+<code>
+	
+	load_translation(model, 'data/titanic/template.txt')
+	print(scasp_query(model, x, pred=False))
+	
+</code>
+
+Here is the justification for a passenger in the titanic example above (note that survived(1,0) means that passenger with id 1 perished (denoted by 0):
+
+<code>
+
+	% QUERY:I would like to know if
+	     'goal' holds (for 1).
+
+		ANSWER:	1 (in 2.401 ms)
+
+	JUSTIFICATION_TREE:
+	'goal' holds (for 1), because
+	    'survived' holds (for 1, and 0), because
+		person 1 is male, and
+		there is no evidence that abnormal case 2 holds for 1, because
+		    there is no evidence that person 1 paid Var0 not equal 7.8292 for the ticket, and
+		    person 1 paid 7.8292 for the ticket.
+		there is no evidence that abnormal case 4 holds for 1, because
+		    there is no evidence that 'class' holds (for 1, and 1).
+		there is no evidence that abnormal case 6 holds for 1, because
+		    there is no evidence that person 1 is of age Var1 not equal 34.5, and
+		    person 1 is of age 34.5.
+
+	MODEL:
+	{ goal(1),  survived(1,0),  sex(1,male),  not ab2(1),  not fare(1,Var0 | {Var0 \= 7.8292}),  fare(1,7.8292),  not ab4(1),  not class(1,1),  not ab6(1),  not age(1,Var1 | {Var1 \= 34.5}),  age(1,34.5) }
+
+</code>
+
+
+### s(CASP)
+
+All the resources of s(CASP) can be found at https://gitlab.software.imdea.org/ciao-lang/sCASP.
