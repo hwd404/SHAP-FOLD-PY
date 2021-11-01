@@ -48,7 +48,7 @@ Here is an example:
 **attrs** lists all the features needed, **numerics** lists all the numeric features, **label** implies the feature name of the label, **pos** indicates the positive value of the label.
 
 ### Training
-The SHAP-FOLD algorithm is to generate an explainable model that are represented with an answer set program to explain an existing classification model. Here's an example:
+The SHAP-FOLD algorithm generates an explainable model that is represented by an answer set program (Prolog augmented with negation-as-failure) to explain an existing classification model. Here's an example:
 
 <code>
    
@@ -65,7 +65,7 @@ The SHAP-FOLD algorithm is to generate an explainable model that are represented
    
 </code>
 
-We trained a xgboost model with above code, then prepare the training data: 
+We trained a xgboost model with above code, then prepared the training data: 
 
 <code>
    
@@ -78,7 +78,7 @@ We trained a xgboost model with above code, then prepare the training data:
 
 </code>
 
-SHAP_pos, SHAP_neg are the shapley value matrix for positive data and negative data.
+SHAP_pos, SHAP_neg are the Shapley value matrices for positive data and negative data.
 
 <code>
 
@@ -87,7 +87,7 @@ SHAP_pos, SHAP_neg are the shapley value matrix for positive data and negative d
 
 </code>
 
-**model** first need to be initialized with specified attributes, then is trained with the prepared input data. After training, the model can make prediction for the test data:
+**model** first needs to be initialized with specified attributes, then trained with the prepared input data. After training, the model can make prediction for the test data:
 
 <code>
     
@@ -104,8 +104,8 @@ Also, the process of data preparation is different for a custom classification m
 
 ### Limits
 
-The recommended number of feature columns should be less than 1500. The time consumption are much more sensitive to the number of columns. \
-The time complexity is roughly polynominal to the number of instances and exponential to the number of features for both shapley value caculation and HUIM. \
+The recommended number of feature columns should be less than 1,500. The execution times are much more sensitive to the number of columns. \
+The time complexity is roughly polynominal to the number of instances and exponential to the number of features for both Shapley value caculation and high utility item-set mining (HUIM). \
 A tabular dataset with 200 rows and 1500 columns would take about 50 minutes to finish on a desktop with 6 core i5 cpu and 32 GB memory.
 
 ### Justification by using s(CASP)
@@ -184,7 +184,7 @@ Here is the justification for a passenger in the titanic example above (note tha
 
 </code>
 
-The code of the above example can be found at **example.**.
+The code of the above example can be found in **example.**.
 	
 ### s(CASP)
 
