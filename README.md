@@ -22,7 +22,7 @@ If there are still missing libraries, you can use the same command to install th
 ### Data preparation
 
 The SHAP-FOLD algorithm takes binary tabular data as input, each column should be an **independent** binary feature. \
-Numeric features would be mapped to as few numerical intervals as possible. \
+Numeric features should be mapped to as few numerical intervals as possible. \
 We have prepared two different encoders in this repo for tabular data: one-hot encoder and decision tree encoder. 
 + one-hot encoder can be used for simple / small datasets.
 + decision tree encoder can be used for larger datasets. Only the features with high information gain would be selected.
